@@ -156,7 +156,7 @@ Your intuition to “set the instruction aside” is correct. In hardware terms:
 **Q:** “Are we doing out-of-order issue?”
 **A:** Practical precise designs use **in-order issue** into queues, **out-of-order execute**, **in-order commit**. Fully out-of-order issue complicates dependency tracking and is rarely used for precise, general-purpose cores.
 
-Here is a corrected, polished continuation with clear elaboration. I keep your sequence, fix terminology, and tighten the logic. No summaries. Just the content, made precise.
+Here is a corrected, polished continuation with clear elaboration. I keep your sequence, fix terminology, and tighten the logic.
 
 # Picking up the dependency example
 
@@ -167,7 +167,7 @@ Here is a corrected, polished continuation with clear elaboration. I keep your s
   I2: R4 = R1 + R5        ; uses R1  → RAW on R1 from I1
   I3: R4 = R8 + R9        ; writes R4  → potential WAW with I2’s dest if same name
   ```
-* If I2 waits for both sources (R1 and R5) before reading either, then a **WAR** hazard can arise against later writers to those sources. More importantly, a later instruction that writes the **same architectural name** as an earlier producer or consumer can create **WAW** or **WAR** problems when we execute out of order.
+* A **WAR** hazard exists if a later instruction writes a source register before an earlier instruction has read it (e.g., if a later writer to `R1` arrives before `I2` has read `R1`). More importantly, a later instruction that writes the **same architectural name** as an earlier producer or consumer can create **WAW** or **WAR** problems when we execute out of order.
 * Core correctness rule: **semantics** = for every register read in single-threaded code, you must return the value defined by the latest preceding write in **program order**. That is fully captured by **RAW (true) dependences**. **WAR/WAW** are name conflicts and are not true dataflow, but they can cause wrong reads or wrong final values if you reorder without care.
 
 > Takeaway: Out-of-order execution must never violate RAW. WAR and WAW must be neutralized so they cannot corrupt RAW.
@@ -269,34 +269,37 @@ Problem to solve: stop stalling for **name** dependences and reduce conservative
 * Tomasulo-style renaming keeps track of **which tag owns the current architectural name**. Only the instruction that **currently owns** the name updates the architectural register mapping; older producers’ results are ignored for architectural state.
 * In modern precise machines, a **Reorder Buffer (ROB)** commits in order; Tomasulo’s original FP unit handled in-order result status to maintain correct final state.
 
-# Example walkthrough (cleaned)
+# Example walkthrough (RS tags and renaming)
 
-Consider:
+Example 1 (RAW preserved):
 
 ```
-L1: LOAD  R0, [R7 + 0]     → RS tag Ld1
-L2: LOAD  R1, [R7 + 8]     → RS tag Ld2
-M1: MUL   R4, R0, R1       → RS tag Mu3; sources (Qj=Lp: Ld1), (Qk=Lp: Ld2)
-A1: ADD   R1, R8, R9       → RS tag Ad4; final writer to architectural R1 is Ad4
+LD r0, 0(r7)        →  RS1:  LD    RS1, 0, 0x1000
+LD r1, 8(r7)        →  RS2:  LD    RS2, 8, 0x1000
+MUL.D r4, r0, r1    →  RS3:  MUL.D RS3, RS1, RS2
 ```
 
-* `M1` does **not** wait on the architectural names R0/R1. It waits on **tags** `Ld1` and `Ld2`.
-* `A1` writing R1 early is safe. If an intermediate consumer needs the **old** R1 from `L2`, it will be waiting on `Ld2`, not on the name “R1.”
-* Only the instruction that **owns** the R1 mapping at commit updates architectural R1. Older producers’ architectural writes are suppressed.
+* `MUL.D` consumes by **tags** (`RS1`, `RS2`), not by architectural names (`r0`, `r1`).
+* When `RS1`/`RS2` complete, they broadcast (tag, value); `RS3` wakes up. **RAW is preserved** because consumers bind to producing tags.
 
-# Data structures to track it
+Example 2 (WAW avoided by renaming):
 
-For each **Reservation Station entry**:
+```
+LD r0, 0(r7)        →  RS1:  LD    RS1, 0, 0x1000
+LD r1, 8(r7)        →  RS2:  LD    RS2, 8, 0x1000
+MUL.D r4, r0, r1    →  RS3:  MUL.D RS3, RS1, RS2
+ADD.D r1, r0, r3    →  RS4:  ADD.D RS4, RS1, 0x16
+```
 
-* `op`: operation code
-* `Vj, Vk`: operand values if ready
-* `Qj, Qk`: producer tags if not ready
-* `Dest`: destination tag (this RS tag or a physical register id)
-* `Busy/Ready` bits
+* Two writers to architectural `r1` exist: `RS2` (from the load) and `RS4` (from the add). Renaming assigns each a distinct destination tag.
+* The Rename Map makes `r1 → RS4` after `ADD.D` issues; earlier `RS2` may still feed consumers by tag, but it no longer “owns” architectural `r1`.
+* At commit, only the instruction that currently owns `r1` in the Rename Map updates architectural state. Thus **WAW is neutralized**.
 
-For each **architectural register**:
+Q: Which `r1` should be written into the register file?
 
-* `RenameMap[R] = current_tag_or_physreg` indicating **who owns** the next architectural write to R.
+A: Only the last mapping (from `ADD.D → RS4`). The earlier `LD` to `r1` (`RS2`) can still serve consumers via its tag but must not overwrite architectural `r1` at commit if it no longer owns the name. The ROB enforces in-order commit of the current owner; older, non-owning results are suppressed for architectural writeback.
+
+
 
 # Answers to the inline questions
 
