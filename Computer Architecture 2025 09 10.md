@@ -1,5 +1,3 @@
-Here is a corrected and expanded version, organized in sections.
-
 # 1) Why branch prediction matters
 
 Branches limit pipeline throughput. A taken branch with an unknown direction or target stalls fetch. Good prediction lowers control hazards and raises IPC.
@@ -109,18 +107,6 @@ Two-level schemes capture **history**:
    * GHR-indexed PHT for global schemes, or
    * Hybrids that combine them.
 3. If direction predicts taken and BTB hits, next fetch PC becomes the BTB target. Otherwise fetch PC+4.
-
-# 16) Corrections to the transcript
-
-* “Two-digit decimal addresses” were a didactic simplification. Real designs use binary PC bits and modulo indexing.
-* The 2-bit states are 00, 01, 10, 11. There is no “1 z” or “1 c.”
-* A 2-bit predictor does **not** improve alternating T/NT; it also mispredicts every time after warmup.
-* The table of 2-bit counters used with per-PC indexing is commonly called a **BHT**. **PHT** usually refers to the counter table in two-level (history-indexed) predictors.
-* BTB and direction predictor are separate in most implementations. Both are needed for low-stall fetch on taken branches.
-
-If you want, I can add a compact state diagram and a worked timeline for loop and alternation cases.
-
-Here is a corrected and expanded version, organized in sections.
 
 # 1) Two-level (correlating) predictor is still one predictor
 

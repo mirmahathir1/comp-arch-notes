@@ -1,14 +1,3 @@
-Here’s a corrected and expanded version, organized into sections. I keep the original flow but fix logic, terminology, and facts, and I elaborate where the transcript was thin or imprecise.
-
-# Administrative clarifications
-
-* “Piaza” → Piazza.
-* “supercalas/supercal” → superscalar.
-* “Mo’s law” → Moore’s law.
-* “Tomosulus/tomosulus” → Tomasulo’s algorithm.
-* “branch table buffer” → branch target buffer (BTB).
-* Solutions are posted after late deadlines; midterm covers through the end of today’s lecture. No technical content here to adjust.
-
 # Baseline Tomasulo’s algorithm (what it actually is)
 
 * Core pieces: reservation stations (RS) near each functional unit, a common data bus (CDB) for result broadcast, and a register alias table (RAT) that maps architectural registers to producer tags.
@@ -274,20 +263,3 @@ Here is a corrected, polished, and expanded version in sections. I fix factual a
 * **Why ROB + RS?** ROB gives precise, in-order commit and recovery. RSs are near FUs to hold ready operands/tags and start work the cycle data arrives.
 * **Can we split the issue cycle?** Not beyond small widths. The scalable solution is a **pipelined** multi-stage rename/issue that processes the whole bundle each stage.
 * **Do we need “n CDBs”?** No single shared bus scales. Use multiple result buses and locality-aware, often clustered, bypass networks.
-
-# Benchmark names and CPI remarks corrected
-
-* The SPEC CPU integer suite includes programs like **hmmer**, **gobmk** (Go), **sjeng** (chess), **mcf** (transportation network), and **h264ref** (video).
-* **mcf** is memory-latency bound with pointer-chasing and poor locality, so CPI can be very high on small in-order cores.
-* The **ideal CPI** for a dual-issue core is **0.5** only under unrealistic assumptions: perfect prediction, single-cycle latencies, no structural limits, and sufficient mix of independent ops. Real CPI is higher due to pipeline, cache, and branch costs.
-
-# Terminology and slips fixed
-
-* Superscalar, not “supercalas/supercalers.”
-* Tomasulo’s algorithm, not “tomos/tomosolus.”
-* Moore’s law, not “Mo’s law.”
-* BTB (target **addresses**), not “branch table buffer,” and not an instruction store.
-* Return address stack, not “return step.”
-* “Four micro-operations per **cycle**,” not “per second.”
-
-If you want me to apply the same treatment to specific slides or diagrams, paste them and I will correct and expand with precise mechanics.

@@ -300,9 +300,7 @@ Instr i+2:             IF -> ID -> EX -> MEM -> WB
 
 ---
 
-If you want, I can add hazard detection logic, forwarding paths, and the flush/stall control equations next.
-
-# Corrected and expanded notes: hazards, timing, forwarding, and scheduling
+# hazards, timing, forwarding, and scheduling
 
 ## 1) Ideal speedup vs reality
 

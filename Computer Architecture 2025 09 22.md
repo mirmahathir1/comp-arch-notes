@@ -1,9 +1,7 @@
-# Admin
-
 * Assignment 3 releases today. Topic: out-of-order (OoO) execution.
 * Exams: material **through OoO and superscalar basics** is in Midterm 1; **after that** is on the Final.
 
-# Recap: Tomasulo’s Algorithm (corrected)
+# Recap: Tomasulo’s Algorithm
 
 * **Reservation stations (RS):** small buffers per functional unit. Issue checks only for a free RS entry, not for operand availability.
 * **Register renaming:** renames architectural registers to tags, eliminating **WAR** and **WAW** hazards. **RAW** remains the true dependency.
@@ -106,15 +104,6 @@ L1: ...
 * **Spectre:** exploits **mispredicted** transient execution to leak data via microarchitectural side channels.
 * **Meltdown:** exploits **deferred privilege checks** so a transient load reads kernel data; the architectural fault arrives later, but the cache state leaks the value.
 * Lesson: **Do not make architectural updates until commit;** also harden transient behaviors and side channels.
-
-# Terminology fixes from the transcript
-
-* Tomasulo’s algorithm, not “Thomas/tomosulus/tools.”
-* **Superscalar**, not “supercala/supercaler.”
-* **VLIW**, not “VIW.”
-* **Common Data Bus (CDB)**, not “class.”
-* **TLB (Translation Lookaside Buffer)**, not “translation side/look buffer.”
-* **Precise exceptions** require **in-order commit**.
 
 # Where this lecture goes next
 

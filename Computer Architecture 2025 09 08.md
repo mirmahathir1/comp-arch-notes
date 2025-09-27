@@ -1,5 +1,3 @@
-# Corrections and full explanations
-
 ## 1) Pipeline performance model (corrected)
 
 * Ideal pipelining increases **throughput**, not single-instruction **latency**. With total unpipelined work (T) split across (n) balanced stages, the ideal **speedup in steady state** is (\approx n) assuming no hazards and negligible stage-register overhead.
@@ -238,13 +236,3 @@ Examples in a 5-stage:
 # When early-ID resolution is still useful
 
 * Even with BTB+PHT, putting a lightweight **comparator** and **PC+imm adder** in ID allows immediate correction on BTB/PHT misses and reduces recovery latency when prediction is unavailable. Ensure ID timing remains within clock budget.
-
-# Corrected glossary
-
-* **Superscalar**: issue (W>1) instructions per cycle.
-* **BTB**: branch target buffer, tagged target cache.
-* **PHT**: pattern history table of 1/2-bit counters.
-* **Global history**: shift register of recent outcomes.
-* **Local history**: per-branch outcome history.
-* **BTFNT**: static heuristic, backward=taken, forward=not-taken.
-* **Delay slot**: ISA-defined instruction after branch that always executes.

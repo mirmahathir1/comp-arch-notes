@@ -182,17 +182,3 @@ Original totals: `P0 = 100 W`, `E_dyn0 = 80 * 20 = 1600 J`, `E_stat0 = 20 * 20 =
 * Frequency-only overclocking works until timing margin is exhausted. Past that, errors or crashes occur.
 * Practical overclocking usually increases `VDD` to regain margin, which raises dynamic power (`∝ V^2 * f`) and often leakage; better cooling becomes necessary.
 
-# 12) Notational and naming corrections
-
-* Moore’s Law, not “Mo’s law”.
-* Amdahl’s Law, not “Andal’s law”.
-* floating-point, not “floatingoint”.
-* microprocessors, not “microp processors”.
-* BIOS spelled as used; many systems expose firmware via UEFI.
-
-# 13) Quick consistency checks
-
-* Track units: power in watts, time in seconds, energy in joules.
-* For DFS at fixed `V`: expect `E_dyn` unchanged, `E_static` up, total energy often worse for CPU-bound code.
-* For DVFS: dynamic energy scales with `V^2`; total energy usually improves, subject to leakage behavior and performance targets.
-* Use Little’s Law to reason about latency versus throughput.

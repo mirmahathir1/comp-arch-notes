@@ -228,10 +228,3 @@
 
 ---
 
-# Small cleanups and corrected terms
-
-* **Tomasulo’s** algorithm (not “Tom Sulos,” “tomosulo,” or “Thomas”).
-* **Superscalar** (not “supercalar”).
-* **ALU** (not “alou”).
-* **Common Data Bus** (not “common database”).
-* Use **Load/Store Queue (LSQ)** for memory ops; enforce program order for stores and safe early execution for loads with address checks or memory-disambiguation prediction.

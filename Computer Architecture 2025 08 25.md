@@ -1,4 +1,3 @@
-Converted to Markdown without LaTeX.
 
 # 1) Course logistics (clarified)
 
