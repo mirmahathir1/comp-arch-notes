@@ -75,7 +75,7 @@ Even with a BTB, if one of the (K) fetched instructions is a taken branch whose 
 
 Note: the lecture’s “branch target cache that stores the **instructions**” corresponds to BTIC/µop cache. The **BTB** itself stores **addresses**, not instructions.
 
-# Trace cache mechanics (corrected)
+# Trace cache mechanics
 
 * Key idea: store a sequence of (decoded) instructions/µops **in predicted execution order**, including taken/not-taken outcomes for the branches in the trace.
 * Indexing: by the first PC plus the branch outcome pattern. A hit requires that the predictor’s current outcomes match the stored pattern.

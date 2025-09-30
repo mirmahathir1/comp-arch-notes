@@ -1,31 +1,31 @@
-Converted to Markdown with plain text equations.
-
 # Dynamic vs. static power and energy
 
 * **Dynamic power**
-  `P_dyn = alpha * C * V^2 * f`
+
+
+  `P_dyn ∝ C * V^2 * f`
+
+
   where `C` is effective switched capacitance, `V` is supply voltage, `f` is clock frequency, and `alpha` in `[0,1]` is the activity factor.
 
 * **Dynamic energy for a fixed amount of work**
-  `E_dyn = alpha * C * V^2 * N_switches`
+
   Equivalently, with `N_cycles` cycles and CPI constant:
-  `E_dyn = P_dyn * T = (alpha * C * V^2 * f) * (N_cycles / f) = alpha * C * V^2 * N_cycles`
+  `E_dyn ∝ P_dyn * T`
+
+  `= C * V^2 * f) * (N_cycles / f)` 
+  
+  `= C * V^2 * N_cycles`
+
   Frequency cancels for a CPU-bound workload at fixed `V`.
 
 * **Static (leakage) power**
-  `P_static = I_leak * V`
   Static energy over runtime `T`: `E_static = P_static * T`.
 
 # Why frequency affects power but not dynamic energy (common assumptions)
 
 * If CPI and voltage are unchanged and the workload is CPU-bound: `T = N_cycles / f`. Increasing `f` raises `P_dyn` linearly but shortens `T` proportionally, so `E_dyn` is unchanged.
 * This cancellation does not include static energy. Slower frequency lengthens `T` and therefore increases `E_static`.
-
-# Voltage–frequency relationship (why DVFS is coupled)
-
-* Maximum safe frequency rises with voltage because gate delay falls as `V` increases. A common model is the alpha-power law:
-  `f_max ∝ ((V - V_th)^gamma) / V` with `gamma` in `[1,2]`.
-  Hence, lowering `V` typically requires lowering `f` to meet timing; raising `V` allows higher `f`.
 
 # DVFS, DFS, and overclocking
 
@@ -35,13 +35,15 @@ Converted to Markdown with plain text equations.
 
 # Worked mini-example: 15% voltage drop with a matched 15% frequency drop
 
+**Question:** Some microprocessors today are designed to have adjustable voltage, so a 15% reduction in voltage may result in a 15% reduction in frequency. What would be the impact on dynamic energy and on dynamic power?
+
 Let `V' = 0.85 * V`, `f' = 0.85 * f`.
 
-* **Dynamic energy scaling**: `E_dyn' / E_dyn = (V'/V)^2 = 0.85^2 = 0.7225`
-  Dynamic energy falls to **72.25%** of the original.
+* **Dynamic energy scaling**: `E_dyn' / E_dyn = (V'/V)^2 = 0.85 * 0.85 = 0.72`
+  Dynamic energy falls to **72%** of the original.
 
-* **Dynamic power scaling**: `P_dyn' / P_dyn = (V'/V)^2 * (f'/f) = 0.85^2 * 0.85 = 0.614125`
-  Dynamic power falls to **61.41%** of the original.
+* **Dynamic power scaling**: `P_dyn' / P_dyn = (V'/V)^2 * (f'/f) = 0.85 * 0.85 * 0.85 = 0.61`
+  Dynamic power falls to **61%** of the original.
 
 # When DFS alone can still save energy
 
@@ -102,29 +104,61 @@ Let `V' = 0.85 * V`, `f' = 0.85 * f`.
   Clock gating stops toggling and cuts dynamic power only.
   Power gating removes supply to a block and cuts static power at the cost of wake-up latency and state retention.
 
-# 3) Revisiting the two energy problems (unit-correct and consistent)
+# Processor Power Scaling and Energy Consumption
 
-**Given:** `P_dyn0 = 80 W`, `P_stat0 = 20 W`, `f0 = 3 GHz`, CPU-bound, `T0 = 20 s`.
-Original totals: `P0 = 100 W`, `E_dyn0 = 80 * 20 = 1600 J`, `E_stat0 = 20 * 20 = 400 J`, `E0 = 2000 J`.
+## Problem Statement
 
-## a) DFS only: frequency ↓20% to `0.8 * f0`, voltage unchanged
+Processor-A runs at **3 GHz**, consuming:
 
-* `P_dyn' = 0.8 * 80 = 64 W`.
-* `P_stat' = 20 W` at fixed `VDD`.
-* `T' = T0 / 0.8 = 25 s`.
-* `E_dyn' = 64 * 25 = 1600 J` unchanged.
-* `E_stat' = 20 * 25 = 500 J` worse.
-* **Total:** `E' = 2100 J`. Units are joules.
+* **Dynamic power** = 80 W
+* **Static power** = 20 W
+* **Execution time** = 20 s
 
-## b) DVFS: frequency ↓20% and voltage ↓20% (`f' = 0.8 * f0`, `V' = 0.8 * V0`)
+We need to calculate total **energy consumption** under two scenarios:
 
-* Dynamic power scale: `(V'^2 * f') / (V0^2 * f0) = 0.8^2 * 0.8 = 0.512`.
-  `P_dyn' = 0.512 * 80 = 40.96 W`.
-* `T' = 25 s`.
-* `E_dyn' = 40.96 * 25 = 1024 J` down from 1600 J.
-* If `I_leak` is held constant: `P_stat' = 0.8 * 20 = 16 W`.
-  `E_stat' = 16 * 25 = 400 J` same as baseline because `0.8 * 1.25 = 1`.
-* **Total:** `E' = 1024 + 400 = 1424 J`. In real chips, leakage often also drops with `V` and temperature.
+1. **Only frequency scaled down by 20%**
+2. **Both frequency and voltage scaled down by 20%**
+
+---
+
+## Case 1: Frequency scaled down by 20%
+
+* **New frequency** = 3 × 0.8 = 2.4 GHz
+* **Dynamic power** = 80 × 0.8 = 64 W
+* **Static power** = 20 W (unchanged)
+* **Execution time** = 20 ÷ 0.8 = 25 s
+
+**New total power** = 64 + 20 = **84 W**
+**New energy** = 84 × 25 = **2100 J**
+
+**Explanation:**
+Dynamic power is proportional to frequency. Static power does not change with frequency. Lower frequency increases execution time (since time ∝ 1/f). Total energy is power × time.
+
+---
+
+## Case 2: Frequency and voltage scaled down by 20%
+
+* **New frequency** = 2.4 GHz
+* **Voltage scaling**: V → 0.8V. Dynamic power ∝ V² × f.
+  → Dynamic power = 80 × 0.8 × 0.64 = **41 W**
+* **Static power** = 20 × 0.8 = **16 W** (static ∝ V)
+* **Execution time** = 25 s
+
+**New total power** = 41 + 16 = **57 W**
+**New energy** = 57 × 25 = **1425 J**
+
+**Explanation:**
+Scaling both voltage and frequency reduces dynamic power significantly (since power ∝ V²f). Static power also reduces because it depends linearly on voltage. Although runtime increases, the large drop in power yields lower overall energy.
+
+---
+
+## Final Results
+
+* **Frequency only scaled (20%)** → **2100 J**
+* **Frequency + Voltage scaled (20%)** → **1425 J**
+
+Voltage scaling reduces energy more effectively than frequency scaling alone.
+
 
 # 4) Compiler constant propagation and precompute
 
@@ -182,3 +216,44 @@ Original totals: `P0 = 100 W`, `E_dyn0 = 80 * 20 = 1600 J`, `E_stat0 = 20 * 20 =
 * Frequency-only overclocking works until timing margin is exhausted. Past that, errors or crashes occur.
 * Practical overclocking usually increases `VDD` to regain margin, which raises dynamic power (`∝ V^2 * f`) and often leakage; better cooling becomes necessary.
 
+
+
+# 12) Quick check: power vs. energy with time change
+
+**Question:** Processor A consumes on average 20% more power than processor B. Processor A on average needs 70% of the time that processor B needs. What is the energy of A relative to B?
+
+**Answer:** Using `E = P * T`, `E_A / E_B = 1.2 * 0.7 = 0.84`. Processor A uses **84%** of B’s energy (16% less).
+
+# Question
+
+Branch instructions take 2 cycles; all other instructions take 1 cycle (compare takes 1).
+CPU A uses a separate compare + branch. CPU B has a single branch.
+CPU A’s clock is 1.25× CPU B. On CPU A, 20% of instructions are branches (and another 20% are compares). Which CPU is faster?
+
+# Answer
+
+**CPU A is faster by 25%.**
+
+## CPU A
+
+* 20% branches → 2 cycles
+* 20% compares → 1 cycle
+* 60% other → 1 cycle
+* Average CPI = (0.2 × 2) + (0.2 × 1) + (0.6 × 1) = **1.2**
+
+## CPU B
+
+* 20% branches → 2 cycles
+* 80% other → 1 cycle
+* Average CPI = (0.2 × 2) + (0.8 × 1) = **1.2**
+
+## Performance Comparison
+
+Execution time ∝ CPI ÷ frequency
+
+* CPU A time = 1.2 ÷ (1.25 × fB)
+* CPU B time = 1.2 ÷ fB
+
+Ratio = (1.2 / 1.25 fB) ÷ (1.2 / fB) = 1 ÷ 1.25 = **0.8**
+
+So CPU A uses 80% of CPU B’s time → **1.25× faster**.

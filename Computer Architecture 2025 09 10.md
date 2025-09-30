@@ -116,21 +116,31 @@ Two-level schemes capture **history**:
 
 # 2) Accuracy → CPI: fix the math
 
-Assumptions from the text: 20% branches, mispredict penalty = 10 cycles, base CPI = 1, two cases:
+Assumptions (resolve in stage 10; modern high-frequency plausible):
 
-* 2-bit per-PC predictor: **92%** accurate → **8%** mispredicts
-* Two-level (global) predictor: **96%** accurate → **4%** mispredicts
+* Branch fraction (f_b) = **0.2** (20%)
+* Correctly-predicted branches have **0-cycle** penalty beyond the base (CPI = 1)
+* Mispredict penalty (P) = **10** cycles
+* 2-bit per-PC predictor: **92%** accuracy → **8%** mispredict rate (MPR)
+* Two-level (global) predictor: **96%** accuracy → **4%** MPR
+
+Common incorrect arithmetic (double-counts a 1-cycle cost for correct branches; the base CPI already includes it):
+
+* 2-bit: (0.8 + 0.2 \times (10\cdot 0.08 + 1\cdot 0.92) = 1.114)
+* 2-level: (0.8 + 0.2 \times (10\cdot 0.04 + 1\cdot 0.96) = 1.072)
 
 Correct CPI model:
 [
 \text{CPI} ;=; 1 ;+; f_b \cdot \text{MPR} \cdot P
 ]
-where (f_b=0.2), (P=10), MPR = mispredict rate.
+where (f_b=0.2), (P=10), and MPR is the mispredict rate.
+
+Calculations:
 
 * 92%: (1 + 0.2 \cdot 0.08 \cdot 10 = 1.16)
 * 96%: (1 + 0.2 \cdot 0.04 \cdot 10 = 1.08)
 
-A **4-point** accuracy gain here cuts CPI from 1.16 to 1.08 (~6.9% speedup). The transcript’s 1.11/1.07 numbers were inconsistent.
+Impact: A **4-point** accuracy gain reduces CPI from (1.16) to (1.08) → ~6.9% CPI reduction (\approx 7.4% speedup). The 1.114/1.072 results come from the incorrect double-counting above.
 
 # 3) Front-end staging: BTB vs predictor
 

@@ -30,7 +30,7 @@
 
 # Tomasulo’s Algorithm: Context and Core Ideas
 
-## Historical context (corrected)
+## Historical context
 
 * **CDC 6600** (1964, Seymour Cray): out-of-order-like **scoreboarding**, multiple FUs.
 * **IBM 7030 “Stretch”** (early 1960s): early **pipelining** techniques.
@@ -136,7 +136,7 @@
 
 ---
 
-# Terminology and Names (corrected)
+# Terminology and Names
 
 * **Tomasulo’s algorithm** (Robert Tomasulo), not “Thomas/tomosulos/tomosuro.”
 * **CDC 6600**, **CDC 7600**; **IBM System/360 Model 91**.
@@ -188,7 +188,7 @@
 
 ---
 
-# Worked example: Tomasulo schedule (corrected and consistent)
+# Worked example: Tomasulo schedule
 
 **Assumptions**
 
@@ -218,13 +218,4 @@
 | 5 `DIV.D F10,F0,F6` |  5 |    **17–56** | **57** | Waits for F0 at c16; F6 already ready |
 | 6 `ADD.D F12,F8,F2` |  6 |     **9–10** | **11** | Waits for F8 at c8; F2 already ready  |
 
-**Observations**
-
-* The two loads overlap.
-* `SUB.D` and `MUL.D` begin once their inputs arrive via CDB forwarding.
-* `DIV.D` starts immediately after `MUL.D` broadcasts at c16 and runs for 40 cycles.
-* The **critical path** is `Load(F2) → MUL → DIV`, completing at **cycle 57**.
-* Non-critical ops (`SUB`, `ADD`) overlap and retire earlier (`ADD` WB at c11).
-
----
 

@@ -172,7 +172,7 @@ Here is a corrected, polished continuation with clear elaboration. I keep your s
 
 > Takeaway: Out-of-order execution must never violate RAW. WAR and WAW must be neutralized so they cannot corrupt RAW.
 
-# Historical context (corrected)
+# Historical context
 
 * **CDC 6600** (announced 1964), architect **Seymour Cray**, introduced dynamic scheduling via **scoreboarding** (principal designer **Jim Thornton**).
 * **IBM System/360 Model 91** (mid-1960s, c. 1966) introduced **Tomasulo’s algorithm** (by **Robert Tomasulo**) for floating-point.
@@ -203,6 +203,66 @@ Here is a corrected, polished continuation with clear elaboration. I keep your s
   * At write-back for potential **WAR** (delay the write until earlier readers have read).
 
 This keeps correctness but can leave performance on the table when latencies are large or when many instructions could overlap.
+
+## Scoreboarding (CDC 6600): rules recap and worked example
+
+### Rules
+
+* **Issue**
+  * Only issue if the target functional unit (FU) is free.
+  * Stall if an earlier instruction writes the same destination (**WAW**).
+  * Stall on structural hazard if the needed FU is busy.
+
+* **Read operands**
+  * Wait until all source operands are available in the register file.
+  * Avoids **RAW** hazards.
+
+* **Execute**
+  * Execute in the FU; on completion, signal the scoreboard.
+
+* **Write result**
+  * Write back only when all earlier instructions have already read that destination register.
+  * Avoids **WAR** hazards.
+
+* **No forwarding**
+  * All reads happen via the register file after writes; results are not forwarded directly from producing units.
+
+### Example
+
+```text
+I1: R2 ← R1 + R3   ; ADD
+I2: R4 ← R2 × R5   ; MUL
+I3: R2 ← R6 − R7   ; SUB
+I4: R8 ← R4 + R9   ; ADD
+```
+
+#### Walkthrough
+
+* **I1 (ADD R2)**
+  * Issues if ADD unit is free; reads R1, R3 when ready; executes.
+  * Delays writing R2 if any earlier instruction still needs to read R2.
+
+* **I2 (MUL R4 uses R2)**
+  * Issues, then waits at read-operands for R2 (RAW on I1).
+
+* **I3 (SUB R2)**
+  * Stalls at issue due to **WAW** with I1 on R2; cannot proceed until I1 writes.
+
+* **I4 (ADD R8 uses R4)**
+  * Independent of I1/I3; can issue if an ADD FU is free.
+  * Waits to read R4 until I2 produces it (RAW).
+
+### Hazards handled in this flow
+
+* **RAW**: Blocked at read-operands until sources are ready (e.g., I2 waiting on I1 → R2).
+* **WAW**: Blocked at issue when an older instruction targets the same destination (I3 vs I1 on R2).
+* **WAR**: Blocked at write-result until all earlier reads have occurred.
+* **Structural**: Blocked at issue when the needed FU is busy.
+
+### Key takeaway
+
+* Scoreboarding delays only when hazards are real, allowing independent instructions to proceed.
+* No forwarding: reads occur from the register file after writes commit.
 
 # Why scoreboarding can feel “stiff”
 
@@ -320,3 +380,63 @@ A: Only the last mapping (from `ADD.D → RS4`). The earlier `LD` to `r1` (`RS2`
 * **Scoreboarding**: conservative stalls at issue (structural, WAW) and at write-back (WAR), no global forwarding fabric.
 * **Tomasulo**: RS + **register renaming** + CDB remove WAR and WAW stalls and allow wide forwarding. RAW is preserved by tags.
 * Modern precise OoO cores extend Tomasulo with a **ROB** for in-order commit, plus larger physical-register files and multi-ported wakeup/select logic.
+
+## Tomasulo Step-by-Step Timeline
+
+### Instruction Set
+
+* **i1**: `LD F6, 34(R2)`
+* **i2**: `LD F2, 45(R3)`
+* **i3**: `MULTD F0, F2, F4`
+* **i4**: `SUBD F8, F6, F2`
+* **i5**: `DIVD F10, F0, F6`
+* **i6**: `ADDD F6, F8, F2`
+
+Latencies:
+
+* LD = 2 cycles
+* ADDD/SUBD = 2 cycles
+* MULTD = 10 cycles
+* DIVD = 40 cycles
+
+---
+
+### Cycle-by-Cycle
+
+**1**: i1 issues. LD starts [1/2].
+**2**: i2 issues. LD i1 still executing [2/2].
+**3**: i3 issues. i1 completes exec. LD i2 [1/2].
+**4**: i4 issues. WB i1→F6. i2 [2/2].
+**5**: i5 issues. WB i2→F2. i3 waits for F2, i4 waits for F2.
+**6**: i6 issues. i3 starts MULTD [1/10]. i4 starts SUBD [1/2]. i6 waits for F8.
+**7**: i4 SUBD [2/2]. i3 [2/10].
+**8**: WB i4→F8. i3 [3/10]. i6 can now start.
+**9**: i6 ADDD [1/2]. i3 [4/10].
+**10**: i6 ADDD [2/2]. i3 [5/10].
+**11**: WB i6→F6. i3 [6/10].
+**12–14**: i3 [7–9/10].
+**15**: i3 [10/10].
+**16**: WB i3→F0. i5 gets F0 and F6, can start.
+**17–56**: i5 DIVD runs for 40 cycles.
+**57**: WB i5→F10.
+
+---
+
+### Key Dependencies
+
+* **i3** waits for F2 from i2 (WB at 5) → can only start at 6.
+* **i4** waits for F6 (WB at 4) and F2 (WB at 5) → can only start at 6.
+* **i6** waits for F8 from i4 (WB at 8) → starts at 9.
+* **i5** waits for F0 from i3 (WB at 16) → starts at 17.
+
+
+### Tomasulo schedule (given latencies: LD=2, ADD/SUB=2, MULT=10, DIV=40)
+
+| Instr | Operation          | Issue | Exec start | Exec end | Write |
+| ----: | ------------------ | :---: | :--------: | :------: | :---: |
+|    i1 | `LD F6, 34(R2)`    |   1   |      2     |     3    |   4   |
+|    i2 | `LD F2, 45(R3)`    |   2   |      3     |     4    |   5   |
+|    i3 | `MULTD F0, F2, F4` |   3   |      6     |    15    |   16  |
+|    i4 | `SUBD F8, F6, F2`  |   4   |      6     |     7    |   8   |
+|    i5 | `DIVD F10, F0, F6` |   5   |     17     |    56    |   57  |
+|    i6 | `ADDD F6, F8, F2`  |   6   |      9     |    10    |   11  |

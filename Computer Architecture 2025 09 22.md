@@ -23,7 +23,7 @@
 
 # Why speculation is hard without in-order commit
 
-### Branch example (corrected)
+### Branch example
 
 ```
 I1: R1 ← R2 / R3         ; long latency
@@ -89,7 +89,7 @@ L1: ...
 * If hardware also issues from **multiple threads on one core**, that is **Simultaneous Multithreading (SMT)**, e.g., “2 threads per core.”
 * If you duplicate the entire core, that is **multicore**.
 
-# OS and placement (corrected)
+# OS and placement
 
 * The OS sees **logical processors** (e.g., 4 cores × 4 SMT threads = 16 logical CPUs). Modern OSes also know topology (core vs thread) and can schedule accordingly.
 * You can request placement with **processor affinity** APIs or with runtimes such as **OpenMP** pragmas; tightly communicating threads may benefit from sharing the same core’s caches.

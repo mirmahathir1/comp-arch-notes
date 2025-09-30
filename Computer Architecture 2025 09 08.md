@@ -1,4 +1,4 @@
-## 1) Pipeline performance model (corrected)
+## 1) Pipeline performance model
 
 * Ideal pipelining increases **throughput**, not single-instruction **latency**. With total unpipelined work (T) split across (n) balanced stages, the ideal **speedup in steady state** is (\approx n) assuming no hazards and negligible stage-register overhead.
 * Two equivalent modeling viewpoints:
@@ -7,14 +7,14 @@
   2. **Fixed CPI** (=1). Then unpipelined clock period (T), pipelined clock period (T/n).
      Both describe the same physics. Use one consistently. Mixing them causes confusion.
 
-## 2) Structural hazards (corrected)
+## 2) Structural hazards
 
 * Definition: two pipeline actions need the **same hardware** in the same cycle.
 * Canonical example in a 5-stage IF–ID–EX–MEM–WB with a **single-ported unified memory**: the **IF** of instruction (i+1) and the **MEM** of instruction (i) both need memory. That conflict causes a stall.
 * It is **not** a conflict between “MEM of one instruction and WB (stage 5) of another” for memory. WB uses the register file, not data memory.
 * Other common structural hazards: insufficient register-file ports (ID reads vs WB write in the same cycle), too few ALU or load/store units.
 
-## 3) Data hazards and forwarding (corrected)
+## 3) Data hazards and forwarding
 
 * In in-order pipelines, only **RAW** hazards appear architecturally. WAR/WAW are avoided by design.
 * **Forwarding** (bypassing) adds data paths from producing stages to consuming stages to reduce **stalls**.
@@ -47,6 +47,12 @@
   3. **Hazard penalty scaling**: data and control hazards span **more stage boundaries**, so the number of stall cycles per hazard typically **increases** with depth.
 * Historical anchor: Intel Pentium 4 **NetBurst** lengthened the integer pipeline (≈20 stages early, ≈31 in Prescott). Branch mispredictions became very expensive. This is the core of the “megahertz myth” era: higher GHz did not guarantee higher performance per clock.
 
+### Concrete example (branch penalties under deeper front-end)
+
+* Suppose you split **EX** into 2 sub-stages and **ID** into 2 sub-stages. The taken-branch penalty can grow from (=3) to about (=5) cycles (with predict-not-taken), because the decision/target resolve later.
+* With (b=0.2) and (p_t≈0.5): per-branch cost rises from (=2.5) to (=3.5), shifting program CPI from (=1.3) to (=1.5).
+
+
 ## 7) Historical correction: the “megahertz myth” demo
 
 * The transcript’s “**167 MHz G4 vs 1.7 GHz P4**” is incorrect. The public comparisons in the early 2000s featured **hundreds of MHz G4** systems (e.g., 733–867 MHz) versus **≈1.5–1.8 GHz Pentium 4** on tasks like Photoshop filters. The point stands: frequency alone did not predict performance due to pipeline depth, IPC, memory hierarchy, and software.
@@ -68,7 +74,7 @@ Let an instruction **produce** its result at stage (P) and the consumer **need**
 ]
 after accounting for available forwarding points. As you split EX or MEM into multiple sub-stages, (P) moves **later**. Unless forwarding taps are added at every new boundary, the required stall count **increases**.
 
-## 10) Control hazards and branch resolution (corrected)
+## 10) Control hazards and branch resolution
 
 * In the **classic 5-stage MIPS-like pipeline**, a conditional branch’s decision and target address are computed in **EX**, not MEM.
 
@@ -93,7 +99,7 @@ Then:
 
   * Average **per-branch** cost (=1 + 0.5\cdot 3 = 2.5) cycles.
   * Program CPI (= 1 + b\cdot 1.5). Example (b=0.2 \Rightarrow \text{CPI}=1.3).
-* If you deepen the front half of the pipe so penalty becomes (=5): per-branch cost (=1+0.5\cdot5=3.5) and CPI (=1+ b\cdot 2.5). With (b=0.2\Rightarrow 1.5).
+* If you deepen the front half of the pipe (e.g., split **EX** and **ID** into 2 sub-stages) so penalty becomes (=5): per-branch cost (=1+0.5\cdot5=3.5) and CPI (=1+ b\cdot 2.5). With (b=0.2\Rightarrow 1.5).
 
 ## 11) Reducing branch cost
 
@@ -127,6 +133,7 @@ Then:
 * Branch mispredict penalties dominate unless prediction is extremely accurate.
 * Wire delays and energy per cycle increase with added stage boundaries.
 * Industry settled on **moderate** depths and invested in **predictors**, **out-of-order execution**, **wider issue**, and **cache** design for performance per watt.
+* Quantification example: increasing (\pi) from (=3) to (=5) raises CPI from (=1.3) to (=1.5) when (b=0.2,\ p_t\approx 0.5) under predict-not-taken.
 
 ## 15) Where to focus next
 
@@ -136,7 +143,7 @@ Then:
 * Verify structural resources: dual-ported I-/D-mem or Harvard split removes the IF/MEM conflict.
 * Keep stage counts moderate unless you can prove predictor accuracy and clock gains offset added hazard costs.
 
-# Branch behavior facts (corrected)
+# Branch behavior facts
 
 * “50% taken” is not universal. Backward loop branches are taken almost every iteration and not taken once at loop exit. Forward conditional branches are often not taken. Aggregate taken rate depends on workload. Use type-aware rules: backward≈taken, forward≈not taken. Do not assume 50%.
 
@@ -184,7 +191,7 @@ The transcript’s “ID resolution makes taken cost 2 and not-taken cost 1” i
   * **PHT** (Pattern History Table): SRAM of **1-bit or 2-bit counters** indexed by PC bits and/or global/local history. Often **not tagged**; aliasing is tolerated.
 * The transcript’s “a hash table in hardware is called a cache” is incorrect. These are **SRAM tables**; some are tagged (BTB), some are not (PHT). They are not data caches, though a BTB is cache-like.
 
-# One-bit vs two-bit predictors on loops (corrected)
+# One-bit vs two-bit predictors on loops
 
 * **1-bit last-outcome predictor** on an (N)-iteration loop typically mispredicts **twice** per steady-state execution: once at loop entry (if prior outcome was not-taken) and once at loop exit. Cold-start details can alter the first one.
 * **2-bit saturating counter** reduces this to **one** mispredict at loop exit, because the counter requires two consecutive opposite outcomes to flip the prediction.

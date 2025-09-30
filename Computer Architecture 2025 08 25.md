@@ -92,7 +92,7 @@ and CPI worsened.
 
 **CISC front end with RISC-like core.** Modern x86 decodes complex CISC instructions into simpler micro-ops internally. Externally CISC, internally scheduled similarly to RISC-style micro-ops.
 
-# 8) Branch instruction design example: MIPS vs RISC-V (corrected)
+# 8) Branch instruction design example: MIPS vs RISC-V
 
 * **MIPS32 classic:** No real `blt` instruction. Assemblers offer `blt` as a pseudo-instruction that expands to:
 
