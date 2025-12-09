@@ -296,3 +296,35 @@ This explains the **flat region** at the beginning of the graph:
 3. The local miss rate remains high regardless of small increases in L2 size
 
 Only once the L2 reaches a **threshold size**—large enough to contain the working set delta between what L1 can hold and what the application needs—do we begin to see the local miss rate decrease. Beyond this point, further increases in cache size yield diminishing returns until the entire working set fits, at which point the miss rate drops to near zero (limited only by compulsory misses).
+
+# Question 8
+
+## Do Processes Have Access to Their Own Page Tables?
+
+**Short answer:** No, user-space processes do not have direct access to their own page tables. Page tables are managed exclusively by the operating system kernel.
+
+---
+
+### Why Not?
+
+1. **Security** — If a process could modify its own page table, it could map arbitrary physical memory addresses, potentially accessing kernel memory or other processes' data. This would completely break process isolation.
+
+2. **Privilege Level** — Page tables reside in kernel memory space. Accessing or modifying them requires kernel-level (ring 0) privileges, which user-space processes don't have.
+
+3. **Hardware Enforcement** — The MMU (Memory Management Unit) enforces these protections. The page table base register (e.g., `CR3` on x86) can only be modified in kernel mode.
+
+# Question 9
+
+**Q: What are the synonym and homonym problems in virtually addressed caches?**
+
+**A:** Virtually addressed caches (VIVT—Virtually Indexed, Virtually Tagged) use virtual addresses directly for cache lookup, which avoids TLB translation on hits but introduces two correctness problems:
+
+**Synonyms (Aliases)** occur when multiple virtual addresses map to the same physical address. This happens with shared memory, memory-mapped files, or copy-on-write pages. The problem is twofold: first, the same physical data may be duplicated in cache under different virtual addresses, wasting space; second, a write to one synonym can leave other cached copies stale, causing reads through a different virtual address to return outdated data.
+
+**Homonyms** occur when the same virtual address maps to different physical addresses across different contexts—typically different processes. After a context switch, a cache lookup using a virtual address might incorrectly return data belonging to the previous process, causing both correctness and security violations.
+
+Common solutions include:
+- For homonyms: flushing the cache on context switch (expensive) or tagging entries with an Address Space ID (ASID)
+- For synonyms: using physical tags with virtual indexing (VIPT), enforcing page coloring, or hardware anti-aliasing
+
+Most modern L1 caches use VIPT, which allows parallel TLB and cache access while eliminating homonyms. Synonyms remain possible but are manageable if the cache is small enough that index bits fall within the page offset.
