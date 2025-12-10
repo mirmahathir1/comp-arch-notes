@@ -328,3 +328,20 @@ Common solutions include:
 - For synonyms: using physical tags with virtual indexing (VIPT), enforcing page coloring, or hardware anti-aliasing
 
 Most modern L1 caches use VIPT, which allows parallel TLB and cache access while eliminating homonyms. Synonyms remain possible but are manageable if the cache is small enough that index bits fall within the page offset.
+
+# Question 10
+
+Why is the overall L2 global miss rate much less than the L1 miss rate?
+
+**Answer:** The L2 global miss rate is much less than the L1 miss rate because:
+
+1. **Definition difference:** The L1 miss rate is calculated as misses divided by total memory accesses. The L2 global miss rate is calculated as L2 misses divided by the same total memory accesses (not just L2 accesses).
+
+2. **Filtering effect:** The L2 cache only receives requests that missed in L1. Since many accesses hit in L1 and never reach L2, the number of L2 misses relative to all memory accesses is naturally smaller.
+
+3. **Mathematical relationship:** Global L2 miss rate = L1 miss rate × L2 local miss rate. Since the L2 local miss rate is a fraction less than 1, multiplying it by the L1 miss rate yields a smaller value.
+
+For example, if L1 miss rate is 5% and L2 local miss rate is 20%, then:
+- L2 global miss rate = 0.05 × 0.20 = 0.01 = 1%
+
+This 1% global L2 miss rate is much smaller than the 5% L1 miss rate.
