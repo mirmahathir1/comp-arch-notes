@@ -345,3 +345,66 @@ For example, if L1 miss rate is 5% and L2 local miss rate is 20%, then:
 - L2 global miss rate = 0.05 × 0.20 = 0.01 = 1%
 
 This 1% global L2 miss rate is much smaller than the 5% L1 miss rate.
+
+# Question 11
+
+**In a shared-memory multicore system, when would you choose an update-based cache coherence protocol versus an invalidate-based protocol? What are the trade-offs of each approach?**
+
+---
+
+## Answer
+
+### Invalidate-Based Protocols
+
+**How it works:** When a processor writes to a cached block, it invalidates all copies in other caches. Other processors must re-fetch the data if needed.
+
+**Best suited for:**
+- **Write-heavy workloads with low sharing** — If data is written multiple times before being read by others, invalidation avoids broadcasting every write
+- **Migratory data patterns** — Data that moves between processors (one processor reads/writes, then another takes over)
+- **Large cache blocks** — Updating entire blocks on every write would be expensive
+
+**Examples:** MESI, MOESI, MSI protocols (used in most modern processors like Intel and AMD)
+
+---
+
+### Update-Based Protocols
+
+**How it works:** When a processor writes to a cached block, it broadcasts the new value to all caches holding a copy, keeping them synchronized.
+
+**Best suited for:**
+- **Producer-consumer patterns** — One processor writes, others immediately read the updated value
+- **Heavily shared read-mostly data** — Multiple processors frequently read data that's occasionally updated
+- **Small, frequently accessed shared variables** — Such as synchronization flags or counters
+
+**Examples:** Dragon, Firefly protocols
+
+### Why Invalidate Dominates in Practice
+
+Most modern systems use invalidate-based protocols because:
+1. Writes are often followed by more writes (not immediate reads)
+2. Bandwidth is a scarce resource; broadcasting updates is expensive
+3. Simpler to implement with directory-based coherence at scale
+
+Update-based protocols are primarily of academic interest today, though the concepts influence hybrid approaches in specialized systems.
+
+# Question 12
+## MSI Cache Coherence Protocol – Q&A
+
+**1.** A cache line in processor P1 is in the **Shared** state. If P2 performs a **store** to the same address, what happens to the state of P1's local cache?
+
+**Answer:** Invalid  
+*Explanation:* When P2 issues a write (BusRdX), all other caches holding that line must invalidate their copies to maintain coherence.
+
+---
+
+**2.** P1's local cache is in the **Modified** state. P2 performs a **store** to the same address. What is P1's next state?
+
+**Answer:** Invalid  
+*Explanation:* P2's store request (BusRdX) forces P1 to write back its modified data to memory and invalidate its local copy, granting P2 exclusive access.
+
+---
+
+**3.** P1's local cache is in the **Modified** state. P2 is in the **Invalid** state and wants to perform a **load**. What is P1's next state?
+
+**Answer:** Shared  
+*Explanation:* P2's read request (BusRd) causes P1 to supply the data (since P1 has the only valid copy). P1 writes back to memory and transitions to Shared, while P2 also enters the Shared state.
