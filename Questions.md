@@ -408,3 +408,39 @@ Update-based protocols are primarily of academic interest today, though the conc
 
 **Answer:** Shared  
 *Explanation:* P2's read request (BusRd) causes P1 to supply the data (since P1 has the only valid copy). P1 writes back to memory and transitions to Shared, while P2 also enters the Shared state.
+
+# Question 13
+
+In a shared-memory multicore system, how does **increasing the cache line size** affect:
+1. The number of **false sharing** misses?
+2. The number of **true sharing** misses?
+
+---
+
+## Answer
+
+### False Sharing Misses — **Increase**
+
+False sharing occurs when different processors access *different variables* that happen to reside on the same cache line. Although no actual data sharing exists, the cache coherence protocol treats the entire line as shared, causing unnecessary invalidations.
+
+**Effect of larger cache lines:**
+- A larger cache line encompasses more memory addresses
+- This increases the probability that unrelated variables accessed by different cores will coexist on the same line
+- More false sharing conflicts arise, leading to **more false sharing misses**
+
+**Example:** If Core 0 writes to `variable_A` and Core 1 writes to `variable_B`, and both now fit on the same (larger) cache line, each write invalidates the other's copy—even though they're logically independent.
+
+---
+
+### True Sharing Misses — **Decrease** (or remain stable)
+
+True sharing occurs when multiple processors access the *same shared variable*. Cache coherence must ensure consistency when one processor modifies data that others also use.
+
+**Effect of larger cache lines:**
+- The number of true sharing events is determined by the application's sharing pattern, not by cache line size
+- However, larger cache lines can exploit **spatial locality**: if multiple truly shared variables are clustered in memory, fetching one brings in neighbors, reducing subsequent misses
+- Net effect is typically a **decrease** in true sharing misses (or no significant change)
+
+**Caveat:** Larger lines also mean more data is transferred per miss, which can increase memory bandwidth consumption even if the miss count decreases.
+
+---
